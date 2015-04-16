@@ -134,17 +134,36 @@
                 }
 
                 function drawCursor(position) {
+                    var interactive, rect;
+
+                    for(var i = 0; i < interactives.length; i++) {
+                        rect = interactives[i].getBoundingClientRect();
+
+                        if ((cursor.position.x > rect.left) && (cursor.position.x < rect.right)) {
+                            interactive = rect;
+                        }
+                    }
+
                     context.beginPath();
                     context.fillStyle = cursor.fillColor;
                     context.strokeStyle = cursor.fillColor;
                     context.lineWidth = cursor.width;
 
-                    context.moveTo(cursor.position.x, position.y);
-                    context.lineTo(cursor.position.x, cursor.position.y);
-                    context.stroke();
+                    if (!!interactive) {
+                        // context.moveTo(interactive.left + (interactive.width/2), position.y);
+                        // context.lineTo(interactive.left + (interactive.width/2), cursor.position.y);
+                        // context.stroke();
 
-                    context.rect(cursor.position.x - (cursor.width/2), cursor.position.y, cursor.width, 1);
-                    context.fill();
+                        context.rect(interactive.left, cursor.position.y, interactive.width, 1);
+                        context.fill();
+                    } else {
+                        context.moveTo(cursor.position.x, position.y);
+                        context.lineTo(cursor.position.x, cursor.position.y);
+                        context.stroke();
+
+                        context.rect(cursor.position.x - (cursor.width/2), cursor.position.y, cursor.width, 1);
+                        context.fill();
+                    }
                 }
 
                 function drawInteractives() {
@@ -199,13 +218,16 @@
                 }
 
                 function render(time) {
-                     var position;
+                    var position;
 
                     // Fade out the lines slowly by drawing a rectangle over the entire canvas
                     context.fillStyle = 'rgba(255, 255, 255, 0.3)';
                     context.fillRect(0, 0, context.canvas.width, context.canvas.height);
 
-                    position = { x: cursor.position.x, y: cursor.position.y };
+                    position = {
+                        x: cursor.position.x,
+                        y: cursor.position.y
+                    };
 
                     // Offset the angle to keep the spin going
                     cursor.angle += cursor.speed;
