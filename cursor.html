@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="uikit.app">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Cursor Experiment</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, maximum-scale=1">
+
+        <link href="cursor.css"rel="stylesheet" type="text/css" charset="utf-8">
+    </head>
+    <body>
+        <section class="main">
+            <button class="interactive">Send</button>
+        </section>
+
+        <canvas class="overlay"></canvas>
+
+        <script type="text/javascript">
+            window.interactives = [];
+
+            document.addEventListener("DOMContentLoaded", function(event) {
+                 interactives = document.querySelectorAll('.interactive');
+            });
+        </script>
+
+
+        <script type="text/javascript">
+            // requestAnimationFrame Polyfill
+            (function() {
+                var lastTime = 0;
+                var vendors = ['webkit', 'moz'];
+                for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+                    window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+                    window.cancelAnimationFrame =
+                      window[vendors[x]+'CancelAnimationFrame'] || window[vendors[x]+'CancelRequestAnimationFrame'];
+                }
+
+                if (!window.requestAnimationFrame)
+                    window.requestAnimationFrame = function(callback, element) {
+                        var currTime = new Date().getTime();
+                        var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+                        var id = window.setTimeout(function() { callback(currTime + timeToCall); },
+                          timeToCall);
+                        lastTime = currTime + timeToCall;
+                        return id;
+                    };
+
+                if (!window.cancelAnimationFrame)
+                    window.cancelAnimationFrame = function(id) {
+                        clearTimeout(id);
+                    };
+            }());
+
+            document.addEventListener("DOMContentLoaded", function(event) {
+                const CURSOR_COLOR = '#af1ee5';
+                const SELECT_COLOR = '#3f54e5';
+
+                var canvas = document.querySelector('.overlay');
+
+                var SCREEN_WIDTH = canvas.offsetWidth;
+                var SCREEN_HEIGHT = canvas.offsetHeight;
+
+                var RADIUS = 110;
+
+                var RADIUS_SCALE = 1;
+                var RADIUS_SCALE_MIN = 1;
+                var RADIUS_SCALE_MAX = 1.5;
+
+                var canvas;
+                var context;
+
+                var cursor;
+
+                var mouseX = (window.innerWidth - SCREEN_WIDTH);
+                var mouseY = (window.innerHeight - SCREEN_HEIGHT);
+                var mouseIsDown = false;
+
+                init();
+
+                function init() {
+                    if (canvas && canvas.getContext) {
+                        context = canvas.getContext('2d');
+
+                        // Register event listeners
+                        document.addEventListener('mousemove', documentMouseMoveHandler, false);
+                        document.addEventListener('mousedown', documentMouseDownHandler, false);
+                        document.addEventListener('mouseup', documentMouseUpHandler, false);
+                        canvas.addEventListener('touchstart', canvasTouchStartHandler, false);
+                        canvas.addEventListener('touchmove', canvasTouchMoveHandler, false);
+                        window.addEventListener('resize', windowResizeHandler, false);
+
+                        createCursor();
+                        windowResizeHandler();
+                        render();
+                    }
+                }
+
+                function createCursor() {
+                    cursor = {
+                        width: 300,
+                        position: { x: mouseX, y: mouseY },
+                        shift: { x: mouseX, y: mouseY },
+                        size: 10,
+                        angle: 0,
+                        fillColor: CURSOR_COLOR //'#' + (Math.random() * 0x404040 + 0xaaaaaa | 0).toString(16)
+                    };
+                }
+
+                function drawCurve(a, b){
+                    var mindpoint = {
+                        x: (a.x+b.x)/2,
+                        y: (a.y+b.y)/2,
+                        d: Math.sqrt(Math.pow(b.x-a.x,2) + Math.pow(b.y-a.y,2))
+                    };
+
+                    context.beginPath();
+                    context.arc(
+                        a.x,
+                        a.y,
+                        mindpoint.d/2,
+                        1.5*Math.PI,
+                        0,
+                        false
+                    );
+
+                    context.arc(
+                        b.x,
+                        b.y,
+                        mindpoint.d/2,
+                        1*Math.PI,
+                        0.5*Math.PI,
+                        true
+                    );
+                }
+
+                function drawCursor(position) {
+                    context.beginPath();
+                    context.fillStyle = cursor.fillColor;
+                    context.strokeStyle = cursor.fillColor;
+                    context.lineWidth = cursor.width;
+
+                    context.moveTo(cursor.position.x, position.y);
+                    context.lineTo(cursor.position.x, cursor.position.y);
+                    context.stroke();
+
+                    context.rect(cursor.position.x - (cursor.width/2), cursor.position.y, cursor.width, 1);
+                    context.fill();
+                }
+
+                function drawInteractives() {
+                    var rect;
+                    for(var i = interactives.length; i--;) {
+                        rect = interactives[i].getBoundingClientRect();
+
+                        context.fillStyle = SELECT_COLOR;
+                        context.rect(rect.left, rect.top, rect.width, rect.height);
+                        context.fill();
+                    }
+                }
+
+                function documentMouseMoveHandler(event) {
+                    mouseX = event.clientX - (window.innerWidth - SCREEN_WIDTH) * .5;
+                    mouseY = event.clientY - (window.innerHeight - SCREEN_HEIGHT) * .5;
+                }
+
+                function documentMouseDownHandler(event) {
+                    mouseIsDown = true;
+                }
+
+                function documentMouseUpHandler(event) {
+                    mouseIsDown = false;
+                }
+
+                function canvasTouchStartHandler(event) {
+                    if(event.touches.length == 1) {
+                        event.preventDefault();
+
+                        mouseX = event.touches[0].pageX - (window.innerWidth - SCREEN_WIDTH) * .5;
+                        mouseY = event.touches[0].pageY - (window.innerHeight - SCREEN_HEIGHT) * .5;
+                    }
+                }
+
+                function canvasTouchMoveHandler(event) {
+                    if(event.touches.length == 1) {
+                        event.preventDefault();
+
+                        mouseX = event.touches[0].pageX - (window.innerWidth - SCREEN_WIDTH) * .5;
+                        mouseY = event.touches[0].pageY - (window.innerHeight - SCREEN_HEIGHT) * .5;
+                    }
+                }
+
+                function windowResizeHandler() {
+                    canvas.width = SCREEN_WIDTH;
+                    canvas.height = SCREEN_HEIGHT;
+
+                    canvas.style.position = 'absolute';
+                    canvas.style.left = (window.innerWidth - SCREEN_WIDTH) * .5 + 'px';
+                    canvas.style.top = (window.innerHeight - SCREEN_HEIGHT) * .5 + 'px';
+                }
+
+                function render(time) {
+                     var position;
+
+                    // Fade out the lines slowly by drawing a rectangle over the entire canvas
+                    context.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                    context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+
+                    position = { x: cursor.position.x, y: cursor.position.y };
+
+                    // Offset the angle to keep the spin going
+                    cursor.angle += cursor.speed;
+
+                    // Follow mouse with some lag
+                    cursor.shift.x += ( mouseX - cursor.shift.x);// * (cursor.speed);
+                    cursor.shift.y += ( mouseY - cursor.shift.y);// * (cursor.speed);
+
+                    // Apply position
+                    cursor.position.x = cursor.shift.x;
+                    cursor.position.y = cursor.shift.y;
+
+                    // Limit to screen bounds
+                    cursor.position.x = Math.max( Math.min( cursor.position.x, SCREEN_WIDTH ), 0 );
+                    cursor.position.y = Math.max( Math.min( cursor.position.y, SCREEN_HEIGHT ), 0 );
+
+                    drawInteractives();
+                    drawCursor(position);
+
+                    window.requestAnimationFrame(render);
+                }
+            });
+        </script>
+    </body>
+</html>
