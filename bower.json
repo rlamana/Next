@@ -1,0 +1,18 @@
+{
+  "name": "next",
+  "version": "0.0.0",
+  "homepage": "https://github.com/rlamana/Next",
+  "authors": [
+    "Ramon Lamana <rlamana@gmail.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "devDependencies": {
+  }
+}

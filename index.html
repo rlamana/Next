@@ -52,8 +52,8 @@
             }());
 
             document.addEventListener("DOMContentLoaded", function(event) {
-                const CURSOR_COLOR = '#af1ee5';
-                const SELECT_COLOR = '#3f54e5';
+                const CURSOR_COLOR = '#23caaf';
+                const SELECT_COLOR = 'rgba(0, 0, 150, 0.4)';
 
                 var canvas = document.querySelector('.overlay');
 
@@ -66,7 +66,6 @@
                 var RADIUS_SCALE_MIN = 1;
                 var RADIUS_SCALE_MAX = 1.5;
 
-                var canvas;
                 var context;
 
                 var cursor;
@@ -74,6 +73,9 @@
                 var mouseX = (window.innerWidth - SCREEN_WIDTH);
                 var mouseY = (window.innerHeight - SCREEN_HEIGHT);
                 var mouseIsDown = false;
+
+                var cursorImg = new Image();
+                cursorImg.src = 'interact-cursor.png';
 
                 init();
 
@@ -136,6 +138,7 @@
                 function drawCursor(position) {
                     var interactive, rect;
 
+                    // Check interactives
                     for(var i = 0; i < interactives.length; i++) {
                         rect = interactives[i].getBoundingClientRect();
 
@@ -154,15 +157,18 @@
                         // context.lineTo(interactive.left + (interactive.width/2), cursor.position.y);
                         // context.stroke();
 
-                        context.rect(interactive.left, cursor.position.y, interactive.width, 1);
-                        context.fill();
+                        //context.rect(interactive.left, cursor.position.y, interactive.width, 1);
+                        // context.arc(interactive.left + Math.floor(interactive.width/2), position.y, 20, 0, 2*Math.PI, true);
+                        context.drawImage(cursorImg, interactive.left + Math.floor(interactive.width/2), position.y);
+                        //context.fill();
                     } else {
-                        context.moveTo(cursor.position.x, position.y);
-                        context.lineTo(cursor.position.x, cursor.position.y);
-                        context.stroke();
+                        // context.moveTo(cursor.position.x, position.y);
+                        // context.lineTo(cursor.position.x, cursor.position.y);
+                        // context.stroke();
 
-                        context.rect(cursor.position.x - (cursor.width/2), cursor.position.y, cursor.width, 1);
-                        context.fill();
+                        //context.rect(cursor.position.x - (cursor.width/2), cursor.position.y, cursor.width, 1);
+                        context.arc(position.x, position.y, 20, 0, 2 * Math.PI, false);
+                        //context.fill();
                     }
                 }
 
@@ -217,24 +223,23 @@
                     canvas.style.top = (window.innerHeight - SCREEN_HEIGHT) * .5 + 'px';
                 }
 
+                function clear() {
+                    // context.fillStyle = 'rgba(255,255,255,0.3)';
+                    // context.fillRect(0, 0, canvas.width, canvas.height);
+
+                    context.clearRect(0, 0, canvas.width, canvas.height);
+                }
+
                 function render(time) {
                     var position;
 
                     // Fade out the lines slowly by drawing a rectangle over the entire canvas
-                    context.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                    context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+                    // context.fillStyle = 'rgba(255, 255, 255, .1)';
+                    // context.fillRect(0, 0, context.canvas.width, context.canvas.height);
 
-                    position = {
-                        x: cursor.position.x,
-                        y: cursor.position.y
-                    };
-
-                    // Offset the angle to keep the spin going
-                    cursor.angle += cursor.speed;
-
-                    // Follow mouse with some lag
-                    cursor.shift.x += ( mouseX - cursor.shift.x);// * (cursor.speed);
-                    cursor.shift.y += ( mouseY - cursor.shift.y);// * (cursor.speed);
+                    // // Follow mouse with some lag
+                    cursor.shift.x += ( mouseX - cursor.shift.x);
+                    cursor.shift.y += ( mouseY - cursor.shift.y);
 
                     // Apply position
                     cursor.position.x = cursor.shift.x;
@@ -244,8 +249,12 @@
                     cursor.position.x = Math.max( Math.min( cursor.position.x, SCREEN_WIDTH ), 0 );
                     cursor.position.y = Math.max( Math.min( cursor.position.y, SCREEN_HEIGHT ), 0 );
 
+                    clear();
                     drawInteractives();
-                    drawCursor(position);
+                    drawCursor({
+                        x: cursor.position.x,
+                        y: cursor.position.y
+                    });
 
                     window.requestAnimationFrame(render);
                 }
